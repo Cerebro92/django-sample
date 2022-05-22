@@ -1,0 +1,9 @@
+[flake8]
+ignore = E501, W503
+exclude =
+  .git,
+  *migrations*,
+  venv,
+  .env,
+  .gitignore,
+  *tests.py
