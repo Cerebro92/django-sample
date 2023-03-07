@@ -1,5 +1,10 @@
 from django.urls import include, path
 from . import views
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+
+router.register('invites',views.InvitesViewSet)
 
 
 app_name = 'accounts'
@@ -38,4 +43,4 @@ urlpatterns = [
             name='resend-verification',
         ),
     ])),
-]
+] + router.urls

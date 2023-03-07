@@ -7,7 +7,7 @@ from ...exceptions import (
     PermissionDenied
 )
 from ...utils import validate_required_fields
-from .serializers import UserSerializer
+from .serializers import UserSerializer, InvitesSeirializer, Invites
 from .utils import (
     check_verification_token,
     create_user,
@@ -15,6 +15,7 @@ from .utils import (
     update_or_create_auth_token,
     update_or_create_verification_token,
 )
+from rest_framework.viewsets import ModelViewSet
 
 
 class LogInView(views.APIView):
@@ -268,3 +269,9 @@ class UpdateUserView(views.APIView):
             request.user,
             status=status.HTTP_200_OK,
         )
+
+
+class InvitesViewSet(ModelViewSet):
+    queryset = Invites.objects.all()
+    serializer_class = InvitesSeirializer
+    http_method_names = ['get','post','options','patch']

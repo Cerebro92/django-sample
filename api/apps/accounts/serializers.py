@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-
-
+from rest_framework.response import Response
+from .models import Invites
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for custom user model.
@@ -39,3 +39,18 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+
+from rest_framework.serializers import ModelSerializer
+
+class InvitesSeirializer(ModelSerializer):
+
+    def update(self, instance, validated_data):
+        get_user_model().objects.create(**{
+            "email":instance.email,
+            "first_name":instance.first_name,
+            "last_name":instance.last_name
+        })
+        return super().update(instance, validated_data)
+    class Meta:
+        model = Invites
+        fields = '__all__'

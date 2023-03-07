@@ -48,3 +48,9 @@ class VerificationToken(models.Model):
 
     def is_valid(self):
         return self.is_active and timezone.now() < self.get_expiration_date()
+
+class Invites(models.Model):
+    email = models.EmailField(max_length=100, verbose_name='Email',null=False)
+    first_name = models.CharField(max_length=100, verbose_name='First Name',null=False)
+    last_name = models.CharField(max_length=100, verbose_name='Last Name',null=False)
+    is_active = models.BooleanField(default=True)
