@@ -1,13 +1,11 @@
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
-from ...exceptions import (
-    AuthenticationFailed,
-    NotFound,
-    PermissionDenied
-)
+from ...exceptions import AuthenticationFailed, NotFound, PermissionDenied
 from ...utils import validate_required_fields
 from .serializers import UserSerializer, InvitesSeirializer, Invites
+from rest_framework.permissions import IsAdminUser
+from api.apps.custom_permissions import IsVerifiedUser
 from .utils import (
     check_verification_token,
     create_user,
@@ -26,12 +24,13 @@ class LogInView(views.APIView):
     * Requires email and password.
     * Returns user object and token.
     """
+
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email', '').strip().lower()
-        password = request.data.get('password')
-        validate_required_fields({'email': email, 'password': password})
+        email = request.data.get("email", "").strip().lower()
+        password = request.data.get("password")
+        validate_required_fields({"email": email, "password": password})
 
         user = authenticate(username=email, password=password)
         if user is None:
@@ -48,6 +47,7 @@ class CreateUserView(generics.CreateAPIView):
     * Requires email, password, first_name, last_name.
     * Returns user object and token.
     """
+
     User = get_user_model()
     queryset = User.objects.all()
     permission_classes = [permissions.AllowAny]
@@ -66,6 +66,7 @@ class RetrieveUserView(views.APIView):
     * Authentication required.
     * Returns user object and token.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -82,11 +83,12 @@ class VerifyUserView(views.APIView):
     * Authentication required.
     * Requires verification_token.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        submitted_token = request.data.get('verification_token', '').strip()
-        validate_required_fields({'verification_token': submitted_token})
+        submitted_token = request.data.get("verification_token", "").strip()
+        validate_required_fields({"verification_token": submitted_token})
 
         user = request.user
         verified_token = check_verification_token(submitted_token, user)
@@ -105,6 +107,7 @@ class ResendVerificationEmailView(views.APIView):
 
     * Authentication required.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -119,17 +122,18 @@ class ForgotPasswordView(views.APIView):
 
     * Requires email.
     """
+
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email', '').strip().lower()
-        validate_required_fields({'email': email})
+        email = request.data.get("email", "").strip().lower()
+        validate_required_fields({"email": email})
         User = get_user_model()
 
         try:
             user = User.objects.get(email=email)
         except (User.DoesNotExist, User.MultipleObjectsReturned):
-            print('User not found.')
+            print("User not found.")
         else:
             verification_token = update_or_create_verification_token(user)
             print(verification_token)
@@ -144,17 +148,20 @@ class ResetPasswordView(views.APIView):
     * Requires email, password, verification_token.
     * Returns user object and token.
     """
+
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email', '').strip().lower()
-        password = request.data.get('password')
-        submitted_token = request.data.get('verification_token', '').strip()
-        validate_required_fields({
-            'email': email,
-            'password': password,
-            'verification_token': submitted_token,
-        })
+        email = request.data.get("email", "").strip().lower()
+        password = request.data.get("password")
+        submitted_token = request.data.get("verification_token", "").strip()
+        validate_required_fields(
+            {
+                "email": email,
+                "password": password,
+                "verification_token": submitted_token,
+            }
+        )
 
         User = get_user_model()
 
@@ -182,15 +189,18 @@ class ChangePasswordView(views.APIView):
     * Requires current_password and new_password.
     * Returns token.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
-        current_password = request.data.get('current_password')
-        new_password = request.data.get('new_password')
-        validate_required_fields({
-            'current_password': current_password,
-            'new_password': new_password,
-        })
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+        validate_required_fields(
+            {
+                "current_password": current_password,
+                "new_password": new_password,
+            }
+        )
 
         user = authenticate(
             username=request.user.email,
@@ -220,17 +230,14 @@ class ChangeEmailView(views.APIView):
     * Requires email.
     * Returns user object and token.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
-        email = request.data.get('email', '').strip().lower()
-        validate_required_fields({'email': email})
+        email = request.data.get("email", "").strip().lower()
+        validate_required_fields({"email": email})
 
-        serializer = UserSerializer(
-            request.user,
-            data={'email': email},
-            partial=True
-        )
+        serializer = UserSerializer(request.user, data={"email": email}, partial=True)
         serializer.is_valid(raise_exception=True)
 
         request.user.email = email
@@ -255,14 +262,11 @@ class UpdateUserView(views.APIView):
     * Authentication required.
     * Returns user object.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
-        serializer = UserSerializer(
-            request.user,
-            data=request.data,
-            partial=True
-        )
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return get_logged_in_user_response(
@@ -274,4 +278,11 @@ class UpdateUserView(views.APIView):
 class InvitesViewSet(ModelViewSet):
     queryset = Invites.objects.all()
     serializer_class = InvitesSeirializer
-    http_method_names = ['get','post','options','patch']
+    http_method_names = ["get", "post", "options", "patch","delete"]
+
+    def get_permissions(self):
+        if self.action in ["partial_update","destroy"]:
+            self.permission_classes.append(IsAdminUser)
+        elif self.action in ["create","list"]:
+            self.permission_classes.append(IsVerifiedUser)
+        return [permission() for permission in self.permission_classes]
