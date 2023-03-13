@@ -1,9 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_framework.response import Response
-from .models import Invites
+from .models import Invite
 from uuid import uuid4
-from rest_framework.serializers import ModelSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -46,9 +44,10 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.get_full_name()
 
 
-class InvitesSeirializer(ModelSerializer):
+class InviteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         user_data = instance.__dict__
+        user_data.pop("_state")
         user_data["password"] = uuid4().__str__()
         serializer = UserSerializer(data=user_data)
         serializer.is_valid(raise_exception=True)  # Validation of User Data
@@ -64,5 +63,5 @@ class InvitesSeirializer(ModelSerializer):
         return super().update(instance, validated_data)
 
     class Meta:
-        model = Invites
+        model = Invite
         fields = "__all__"

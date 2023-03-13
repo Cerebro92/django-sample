@@ -3,9 +3,8 @@ from rest_framework import generics, permissions, status, views
 from rest_framework.response import Response
 from ...exceptions import AuthenticationFailed, NotFound, PermissionDenied
 from ...utils import validate_required_fields
-from .serializers import UserSerializer, InvitesSeirializer, Invites
-from rest_framework.permissions import IsAdminUser
-from api.apps.custom_permissions import IsVerifiedUser
+from .serializers import UserSerializer, InviteSerializer, Invite
+from api.apps.custom_permissions import IsVerifiedUser, IsSuperUser
 from .utils import (
     check_verification_token,
     create_user,
@@ -275,14 +274,14 @@ class UpdateUserView(views.APIView):
         )
 
 
-class InvitesViewSet(ModelViewSet):
-    queryset = Invites.objects.all()
-    serializer_class = InvitesSeirializer
-    http_method_names = ["get", "post", "options", "patch","delete"]
+class InviteViewSet(ModelViewSet):
+    queryset = Invite.objects.all()
+    serializer_class = InviteSerializer
+    http_method_names = ["get", "post", "options", "patch", "delete"]
 
     def get_permissions(self):
-        if self.action in ["partial_update","destroy"]:
-            self.permission_classes.append(IsAdminUser)
-        elif self.action in ["create","list"]:
+        if self.action in ["partial_update", "destroy"]:
+            self.permission_classes.append(IsSuperUser)
+        elif self.action in ["create", "list"]:
             self.permission_classes.append(IsVerifiedUser)
         return [permission() for permission in self.permission_classes]
