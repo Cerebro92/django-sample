@@ -7,7 +7,7 @@ from ...exceptions import (
     PermissionDenied
 )
 from ...utils import validate_required_fields
-from .serializers import UserSerializer
+from .serializers import UserSerializer,InviteSerializer
 from .utils import (
     check_verification_token,
     create_user,
@@ -15,6 +15,8 @@ from .utils import (
     update_or_create_auth_token,
     update_or_create_verification_token,
 )
+from .models import Invite
+
 
 
 class LogInView(views.APIView):
@@ -30,6 +32,7 @@ class LogInView(views.APIView):
     def post(self, request, *args, **kwargs):
         email = request.data.get('email', '').strip().lower()
         password = request.data.get('password')
+        print(email,password)
         validate_required_fields({'email': email, 'password': password})
 
         user = authenticate(username=email, password=password)
@@ -268,3 +271,60 @@ class UpdateUserView(views.APIView):
             request.user,
             status=status.HTTP_200_OK,
         )
+
+class CreateInviteView(views.APIView):
+    """
+    View to create an invite for a new user.
+
+    * Authentication required.
+    * Returns the unique id for the new invite.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = InviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        invite = serializer.save()
+        return Response({'id': str(invite.id)}, status=status.HTTP_201_CREATED)
+
+class AcceptInviteView(views.APIView):
+    """
+    View to accept an invite and create a new user.
+
+    * Authentication required.
+    * Expects the invite id in the URL (e.g. /invites/accept/1234/)
+    * Returns the new user object.
+    """
+    permission_classes = [permissions.AllowAny] # allowing any since the invited person is not yet a user..
+
+    def post(self, request, invite_id, *args, **kwargs):
+        invite = Invite.objects.get(id=invite_id, is_active=True)
+        user_data = {
+            'email': invite.email,
+            'first_name': invite.first_name,
+            'last_name': invite.last_name,
+            'password':"123456" # assigning a random password for now...
+        }
+        serializer = UserSerializer(data=user_data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        invite.is_active = False
+        invite.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class RetrieveInviteView(views.APIView):
+    """
+    View to retrieve an invite's details given an ID.
+
+    * Authentication required.
+    * Returns the invite object.
+    """
+    permission_classes = [permissions.AllowAny] 
+
+    def get(self, request, invite_id, *args, **kwargs):
+        invite = Invite.objects.filter(id=invite_id).first()
+        if invite is None:
+            return Response({'error': 'Invite not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = InviteSerializer(invite)
+        return Response(serializer.data, status=status.HTTP_200_OK)

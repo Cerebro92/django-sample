@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
-from .models import User, VerificationToken
+from .models import User, VerificationToken,Invite
 
 
 class UserAdmin(DefaultUserAdmin):
@@ -14,3 +14,4 @@ class UserAdmin(DefaultUserAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(VerificationToken)
+admin.site.register(Invite)

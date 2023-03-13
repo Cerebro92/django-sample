@@ -38,4 +38,20 @@ urlpatterns = [
             name='resend-verification',
         ),
     ])),
+    path('invites/', include([
+        path(
+            'create',
+            views.CreateInviteView.as_view(),
+            name='create_invite',
+        ),
+        path(
+            'accept/<str:invite_id>',
+            views.AcceptInviteView.as_view(),
+            name='create_invite',
+        ),
+        path('get/<str:invite_id>/', views.RetrieveInviteView.as_view(), name='retrieve_invite'),
+
+
+    ])),
+    
 ]
