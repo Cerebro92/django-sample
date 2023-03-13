@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from .models import Invite
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -39,3 +40,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name()
+
+class InviteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invite
+        fields = ['email', 'first_name', 'last_name','is_active']
+
+    def create(self, validated_data):
+        return Invite.objects.create(**validated_data)
